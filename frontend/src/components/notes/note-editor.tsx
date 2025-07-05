@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Save, X, Calendar, User, Image, Trash2 } from 'lucide-react';
-import { type Note } from '@/components/ui/note-card';
+import { type Note, type NoteFormData } from '@/types';
 
 interface NoteEditorProps {
     note?: Note;
     categories: Array<{ id: string; name: string }>;
-    onSave: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => void;
+    onSave: (note: NoteFormData) => void;
     onCancel: () => void;
     className?: string;
 }
@@ -25,7 +25,10 @@ export const NoteEditor = ({
 }: NoteEditorProps) => {
     const [title, setTitle] = useState(note?.title || '');
     const [content, setContent] = useState(note?.content || '');
-    const [category, setCategory] = useState(note?.category || '');
+    const [category, setCategory] = useState<{
+        _id?: string;
+        name: string;
+    } | null>(note?.category || null);
     const [author, setAuthor] = useState(note?.author || 'Anonymous');
     const [tags, setTags] = useState<string[]>(note?.tags || []);
     const [newTag, setNewTag] = useState('');
@@ -49,13 +52,20 @@ export const NoteEditor = ({
     const handleSave = () => {
         if (!title.trim() || !content.trim()) return;
 
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        if (!user?._id) {
+            console.error('User not found');
+            return;
+        }
+
         onSave({
             title: title.trim(),
             content: content.trim(),
-            category: category || 'General',
+            category: category || { name: 'General' },
             author: author.trim(),
             tags: tags.filter(tag => tag.trim()),
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            user: user._id
         });
     };
 
@@ -184,14 +194,26 @@ export const NoteEditor = ({
                             Category
                         </label>
                         <select
-                            value={category}
-                            onChange={e => setCategory(e.target.value)}
+                            value={category?._id || ''}
+                            onChange={e => {
+                                const selected = categories.find(
+                                    cat => cat.id === e.target.value
+                                );
+                                setCategory(
+                                    selected
+                                        ? {
+                                              _id: selected.id,
+                                              name: selected.name
+                                          }
+                                        : null
+                                );
+                            }}
                             className="w-full h-10 px-3 bg-background border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                             title="Category"
                         >
                             <option value="">Select category...</option>
                             {categories.map(cat => (
-                                <option key={cat.id} value={cat.name}>
+                                <option key={cat.id} value={cat.id}>
                                     {cat.name}
                                 </option>
                             ))}

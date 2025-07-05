@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { type Note } from '@/components/ui/note-card';
+import { type Note } from '@/types';
 
 interface NoteDetailsDialogProps {
     note?: Note;

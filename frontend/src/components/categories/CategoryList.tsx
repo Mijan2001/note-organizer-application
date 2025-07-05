@@ -38,7 +38,7 @@ export default function CategoryList() {
         <Card className="max-w-md mx-auto mt-8 bg-white border border-gray-200 rounded-xl shadow-lg">
             <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-xl p-6">
                 <CardTitle className="text-white text-2xl font-semibold tracking-tight">
-                    📁 All Categories
+                    All Categories
                 </CardTitle>
             </CardHeader>
 

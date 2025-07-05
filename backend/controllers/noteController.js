@@ -43,27 +43,43 @@ export const getNote = async (req, res) => {
 };
 
 export const createNote = async (req, res) => {
-    const { title, content, category, author, tags, imageUrl } = req.body;
+    try {
+        let { title, content, category, author, tags, imageUrl } = req.body;
 
-    if (!title || !content || !author)
-        return res.status(400).json({ message: 'All fields required.' });
+        // Validate required fields
+        if (!title || !content || !author) {
+            return res
+                .status(400)
+                .json({ message: 'All fields are required.' });
+        }
 
-    const cat = await Category.findOne({ name: category });
+        // Ensure category is a string (in case it was sent as an object)
+        if (typeof category === 'object' || category?.name) {
+            category = category.name;
+        }
 
-    if (!cat || !cat._id)
-        return res.status(400).json({ message: 'Invalid category.' });
+        // Check if category exists
+        const cat = await Category.findOne({ name: category });
+        if (!cat || !cat._id) {
+            return res.status(400).json({ message: 'Invalid category.' });
+        }
 
-    const note = await Note.create({
-        title,
-        content,
-        category: cat._id,
-        author,
-        tags,
-        imageUrl,
-        user: req.userId
-    });
+        // Create note
+        const note = await Note.create({
+            title,
+            content,
+            category: cat._id,
+            author,
+            tags,
+            imageUrl,
+            user: req.userId // assuming userId is added to req via middleware
+        });
 
-    res.status(201).json(note);
+        res.status(201).json(note);
+    } catch (error) {
+        console.error('Error creating note:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
 };
 
 export const updateNote = async (req, res) => {

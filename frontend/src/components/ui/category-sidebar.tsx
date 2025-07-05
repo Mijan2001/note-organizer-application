@@ -8,7 +8,7 @@ import { Search, Plus, X } from 'lucide-react';
 
 export interface Category {
     _id?: string;
-    id?: string;
+    // id?: string;
     name: string;
     count: number;
     color?: string;

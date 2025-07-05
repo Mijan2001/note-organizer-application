@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
-import {
-    CategorySidebar,
-    type Category
-} from '@/components/ui/category-sidebar';
+import { CategorySidebar } from '@/components/ui/category-sidebar';
 import { NoteGrid } from '@/components/notes/note-grid';
 import { NoteEditor } from '@/components/notes/note-editor';
-import { type Note } from '@/components/ui/note-card';
+import { type Note, type User, type NoteFormData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -17,6 +14,14 @@ import { toast } from '@/hooks/use-toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+interface Category {
+    _id: string;
+    id: string;
+    name: string;
+    count: number;
+    color?: string;
+}
+
 const Index = () => {
     const [notes, setNotes] = useState<Note[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -24,13 +29,14 @@ const Index = () => {
         null
     );
     const [searchQuery, setSearchQuery] = useState('');
-    const [filteredNotes, setFilteredNotes] = useState<Note[]>([]);
+    // const [filteredNotes, setFilteredNotes] = useState<Note[]>([]);
     const [isEditing, setIsEditing] = useState(false);
     const [editingNote, setEditingNote] = useState<Note | undefined>();
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [showLogin, setShowLogin] = useState(false);
     const [showRegister, setShowRegister] = useState(false);
-    const [user, setUser] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+
     const [token, setToken] = useState<string | null>(null);
     const [showDetails, setShowDetails] = useState(false);
     const [detailsNote, setDetailsNote] = useState<Note | null>(null);
@@ -45,11 +51,10 @@ const Index = () => {
     useEffect(() => {
         const t = localStorage.getItem('token');
         const u = localStorage.getItem('user');
-        console.log('t ===', t);
-        console.log('u ===', u);
+
         if (t && u) {
             setToken(t);
-            setUser(u);
+            setUser(JSON.parse(u));
         }
     }, []);
 
@@ -145,12 +150,6 @@ const Index = () => {
         setCurrentPage(1); // Reset to first page when changing category
     };
 
-    console.log('categories === from index.tsx========= ', categories);
-    console.log(
-        'selectedCategory === from index.tsx ========= ',
-        selectedCategory
-    );
-
     // Only allow note creation if logged in
     const handleCreateNote = () => {
         if (!user) {
@@ -162,10 +161,11 @@ const Index = () => {
     };
 
     const handleNoteClick = (note: Note) => {
-        console.log('node ======: ', note);
-        console.log('user =====', user);
-
-        if (user && note.author.toUpperCase() === user) {
+        if (
+            user &&
+            (note.author.toUpperCase() === user.username.toUpperCase() ||
+                note.author === user._id)
+        ) {
             setEditingNote(note);
             setIsEditing(true);
         } else {
@@ -175,15 +175,15 @@ const Index = () => {
     };
 
     // Save note to backend
-    const handleSaveNote = async (
-        noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>
-    ) => {
+    const handleSaveNote = async (noteData: NoteFormData) => {
         if (!token) return;
         if (editingNote) {
             const now = new Date().toISOString();
+            // For editing, we need to construct the note data without the user property from noteData
+            const { user: userId, ...noteDataWithoutUser } = noteData;
             const updatedNote: Note = {
                 ...editingNote,
-                ...noteData,
+                ...noteDataWithoutUser,
                 updatedAt: now
             };
             console.log('editingNote ====== index.tsx===', editingNote);
@@ -204,19 +204,24 @@ const Index = () => {
                 setIsEditing(false);
                 setEditingNote(undefined);
             } else {
-                // handle error
+                toast({
+                    title: 'Note update failed',
+                    description: 'Could not update the note. Please try again.'
+                });
             }
         } else {
             // Only send required fields for new note
             const { title, content, category, author, tags, imageUrl } =
                 noteData;
 
+            console.log('before token=================== ===', token);
             const res = await fetch(`${API_URL}/api/notes`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
+
                 body: JSON.stringify({
                     title,
                     content,
@@ -226,6 +231,12 @@ const Index = () => {
                     imageUrl
                 })
             });
+
+            console.log('after = token=================== ===', token);
+            console.log(
+                'res from handleSaveNote === index.tsx =============',
+                res
+            );
 
             if (res.ok) {
                 // Refresh current page data
@@ -237,7 +248,10 @@ const Index = () => {
                     description: `"${noteData.title}" was created successfully.`
                 });
             } else {
-                // handle error
+                toast({
+                    title: 'Note creation failed',
+                    description: 'Could not create the note. Please try again.'
+                });
             }
         }
     };
@@ -268,11 +282,20 @@ const Index = () => {
     };
 
     // Handle login success
-    const handleLoginSuccess = (userEmail: string) => {
-        setUser(userEmail);
-        localStorage.setItem('user', JSON.stringify(userEmail));
+    // const handleLoginSuccess = (userEmail: string) => {
+    //     setUser(userEmail);
+    //     localStorage.setItem('user', JSON.stringify(userEmail));
+    //     const t = localStorage.getItem('token');
+    //     if (t) setToken(t);
+    // };
+
+    const handleLoginSuccess = (loggedInUser: User) => {
+        setUser(loggedInUser);
+        localStorage.setItem('user', JSON.stringify(loggedInUser));
         const t = localStorage.getItem('token');
-        if (t) setToken(t);
+        if (t) {
+            setToken(t);
+        }
     };
 
     // Logout

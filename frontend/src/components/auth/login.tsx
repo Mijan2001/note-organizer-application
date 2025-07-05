@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 const URL = import.meta.env.VITE_API_URL;
+
+interface User {
+    username: string;
+    email: string;
+    _id: string;
+}
 interface LoginDialogProps {
     onClose: () => void;
     onRegister: () => void;
-    onLoginSuccess: (user: string) => void;
+    onLoginSuccess: (user: User) => void;
 }
 
 export function LoginDialog({
@@ -40,7 +46,7 @@ export function LoginDialog({
             localStorage.setItem('token', data.token); // token is a string already
             const userStr = localStorage.getItem('user');
             const user = userStr ? JSON.parse(userStr) : null;
-            // console.log('Username=====:', user?.username);
+            console.log('Username=====:', user?.username);
             onLoginSuccess(data.user); // You can also pass parsed user data if needed
             onClose();
         } catch (err: any) {

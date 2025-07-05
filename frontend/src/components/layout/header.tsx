@@ -2,7 +2,13 @@ import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/ui/search-bar';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Plus, User } from 'lucide-react';
+import { Plus, User2 } from 'lucide-react';
+
+interface User {
+    username: string;
+    email: string;
+    _id: string;
+}
 
 interface HeaderProps {
     onCreateNote: () => void;
@@ -11,8 +17,7 @@ interface HeaderProps {
     searchValue?: string;
     onSearchChange?: (value: string) => void;
     className?: string;
-    user?: string | null;
-    username?: string;
+    user?: User | null;
     onLogout?: () => void;
 }
 
@@ -67,7 +72,7 @@ export const Header = ({
                             <>
                                 <Avatar className="w-8 h-8">
                                     <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white font-semibold">
-                                        {user.username
+                                        {user?.username
                                             ?.charAt(0)
                                             .toUpperCase() || 'U'}
                                     </AvatarFallback>
@@ -88,7 +93,7 @@ export const Header = ({
                                 size="icon"
                                 className="bg-gradient-to-tr from-indigo-500 to-blue-500 hover:from-purple-500 hover:to-pink-500 text-white border-none shadow-md hover:shadow-lg"
                             >
-                                <User className="w-4 h-4" />
+                                <User2 className="w-4 h-4" />
                             </Button>
                         )}
                     </div>

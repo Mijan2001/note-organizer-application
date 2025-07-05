@@ -1,33 +1,13 @@
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
 import { Calendar, User } from 'lucide-react';
-
-export interface Note {
-    _id?: string;
-    id?: string;
-    title: string;
-    content: string;
-    category: {
-        _id?: string;
-        name: string;
-    };
-    createdAt: string;
-    updatedAt: string;
-    author: string;
-    tags?: string[];
-    imageUrl?: string;
-    user?: {
-        _id?: string;
-        username?: string;
-    };
-}
+import { type Note, type User as UserType } from '@/types';
 
 interface NoteCardProps {
     note: Note;
     onClick?: () => void;
     className?: string;
-    user?: string | null;
+    user: UserType | null;
     onEdit?: () => void;
     onDelete?: () => void;
 }
@@ -35,7 +15,6 @@ interface NoteCardProps {
 export const NoteCard = ({
     note,
     onClick,
-
     onEdit,
     onDelete
 }: NoteCardProps) => {
@@ -54,11 +33,11 @@ export const NoteCard = ({
         });
     };
 
-    const truncateContent = (content: string, maxLength: number = 120) => {
-        return content.length <= maxLength
-            ? content
-            : content.substring(0, maxLength) + '...';
-    };
+    // const truncateContent = (content: string, maxLength: number = 120) => {
+    //     return content.length <= maxLength
+    //         ? content
+    //         : content.substring(0, maxLength) + '...';
+    // };
 
     return (
         <Card

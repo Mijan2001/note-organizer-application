@@ -1,4 +1,4 @@
-import { type Note } from '@/components/ui/note-card';
+import { type Note, type User } from '@/types';
 import { NoteCard } from '@/components/ui/note-card';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,7 +13,8 @@ interface NoteGridProps {
     onCreateNote: () => void;
     loading?: boolean;
     className?: string;
-    user?: string | null;
+    user: User | null;
+
     onEdit?: (note: Note) => void;
     onDelete?: (note: Note) => void;
     // Pagination props
