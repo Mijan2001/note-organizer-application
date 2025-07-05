@@ -27,7 +27,7 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/auth', authRoutes);
 
-app.get('/', (_req, res) => res.send('API running'));
+app.get('/', (req, res) => res.send('API running'));
 
 mongoose
     .connect(process.env.MONGODB_URI, {})
