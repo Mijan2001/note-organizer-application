@@ -2,7 +2,7 @@
 
 A modern, full-stack note-taking application built with **React 19**, **Node.js**, **Express**, and **MongoDB**. Features a beautiful UI with real-time search, category management, user authentication, and pagination.
 
-## Login Email : xyz@gmail.com, password : 12345678, project video :
+## Login Email : xyz@gmail.com, password : 12345678, project video : https://youtu.be/fdxx97Xhd9E
 
 ![Home](./project-photos/home.png)
 ![Single](./project-photos/single.png)
@@ -121,7 +121,7 @@ A modern, full-stack note-taking application built with **React 19**, **Node.js*
 1. **Clone the repository**
 
     ```bash
-    git clone <your-repo-url>
+    https://github.com/Mijan2001/note-organizer-application.git
     cd new-project-todo
     ```
 
