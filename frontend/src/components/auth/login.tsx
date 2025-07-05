@@ -26,11 +26,22 @@ export function LoginDialog({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
+
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Login failed');
-            localStorage.setItem('token', data.token);
+            // console.log('Login response:====', data);
+
+            // Check if login is successful and required fields exist
+            if (!res.ok || !data.user || !data.token) {
+                throw new Error(data.message || 'Login failed');
+            }
+
+            // Save to localStorage properly
             localStorage.setItem('user', JSON.stringify(data.user));
-            onLoginSuccess(data.user);
+            localStorage.setItem('token', data.token); // token is a string already
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+            // console.log('Username=====:', user?.username);
+            onLoginSuccess(data.user); // You can also pass parsed user data if needed
             onClose();
         } catch (err: any) {
             setError(err.message);
@@ -61,6 +72,8 @@ export function LoginDialog({
                             onChange={e => setEmail(e.target.value)}
                             required
                             autoFocus
+                            placeholder="Enter your email"
+                            title="Email"
                         />
                     </div>
                     <div>
@@ -73,6 +86,8 @@ export function LoginDialog({
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             required
+                            placeholder="Enter your password"
+                            title="Password"
                         />
                     </div>
                     {error && (

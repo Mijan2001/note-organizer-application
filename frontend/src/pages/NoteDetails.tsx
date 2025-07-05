@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 interface NoteType {
     _id: string;
     title: string;
@@ -31,7 +33,7 @@ export default function NoteDetails() {
     const location = useLocation();
 
     useEffect(() => {
-        fetch(`/api/notes/${id}`)
+        fetch(`${API_URL}/api/notes/${id}`)
             .then(res => res.json())
             .then((data: NoteType) => {
                 setNote(data);
@@ -48,6 +50,7 @@ export default function NoteDetails() {
 
     useEffect(() => {
         // If URL has ?edit=1, open edit mode
+
         if (location.search.includes('edit=1')) setEditing(true);
     }, [location.search]);
 
@@ -56,7 +59,7 @@ export default function NoteDetails() {
     const handleDelete = async () => {
         const token = localStorage.getItem('token');
         if (!window.confirm('Are you sure?')) return;
-        const res = await fetch(`/api/notes/${note._id}`, {
+        const res = await fetch(`${API_URL}/api/notes/${note._id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -76,7 +79,7 @@ export default function NoteDetails() {
         e.preventDefault();
         setLoading(true);
         const token = localStorage.getItem('token');
-        const res = await fetch(`/api/notes/${note._id}`, {
+        const res = await fetch(`${API_URL}/api/notes/${note._id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

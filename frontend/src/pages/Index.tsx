@@ -35,59 +35,121 @@ const Index = () => {
     const [showDetails, setShowDetails] = useState(false);
     const [detailsNote, setDetailsNote] = useState<Note | null>(null);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalNotes, setTotalNotes] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+
     // On mount, check for token and user
     useEffect(() => {
         const t = localStorage.getItem('token');
         const u = localStorage.getItem('user');
+        console.log('t ===', t);
+        console.log('u ===', u);
         if (t && u) {
             setToken(t);
             setUser(u);
         }
     }, []);
 
-    // Fetch notes and categories from backend
-    useEffect(() => {
-        if (!token) return; // Don't fetch if not authenticated
-        fetch(`${API_URL}/api/notes`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log('data : ', data);
-                setNotes(Array.isArray(data) ? data : data.notes || []);
-            });
+    // Fetch notes with pagination
+    const fetchNotes = async (
+        page: number = 1,
+        search: string = '',
+        category: string | null = null
+    ) => {
+        setIsLoading(true);
+        try {
+            let url = `${API_URL}/api/notes?page=${page}&limit=6`;
 
-        fetch(`${API_URL}/api/categories`, {
-            headers: { Authorization: `Bearer ${token}` }
-        })
-            .then(res => res.json())
-            .then(setCategories);
-    }, [token]);
-
-    // Filter notes based on category and search query
-    useEffect(() => {
-        let filtered = notes;
-        if (selectedCategory) {
-            const categoryName = categories.find(
-                cat => cat.id === selectedCategory
-            )?.name;
-            if (categoryName) {
-                filtered = filtered.filter(
-                    note => note.category === categoryName
-                );
+            if (search.trim()) {
+                url += `&search=${encodeURIComponent(search)}`;
             }
+
+            if (category) {
+                const categoryObj = categories.find(
+                    cat => cat._id === category
+                );
+                if (categoryObj) {
+                    url += `&category=${categoryObj._id}`;
+                }
+            }
+
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (response.ok) {
+                setNotes(Array.isArray(data.notes) ? data.notes : []);
+                setTotalNotes(data.total || 0);
+                setTotalPages(Math.ceil((data.total || 0) / 6));
+            } else {
+                console.error('Failed to fetch notes:', data);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to fetch notes. Please try again.',
+                    variant: 'destructive'
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching notes:', error);
+            toast({
+                title: 'Error',
+                description: 'Network error. Please check your connection.',
+                variant: 'destructive'
+            });
+        } finally {
+            setIsLoading(false);
         }
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(
-                note =>
-                    note.title.toLowerCase().includes(query) ||
-                    note.content.toLowerCase().includes(query) ||
-                    note.tags?.some(tag => tag.toLowerCase().includes(query))
-            );
+    };
+
+    // Fetch categories
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/categories/`);
+            const data = await response.json();
+            if (response.ok) {
+                setCategories(data);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
         }
-        setFilteredNotes(filtered);
-    }, [notes, selectedCategory, searchQuery, categories]);
+    };
+
+    // Initial data fetch
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    // Fetch notes when dependencies change
+    useEffect(() => {
+        fetchNotes(currentPage, searchQuery, selectedCategory);
+    }, [currentPage, searchQuery, selectedCategory, token]);
+
+    // Handle page change
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        // Scroll to top when page changes
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Handle search change
+    const handleSearchChange = (query: string) => {
+        setSearchQuery(query);
+        setCurrentPage(1); // Reset to first page when searching
+    };
+
+    // Handle category change
+    const handleCategoryChange = (categoryId: string | null) => {
+        setSelectedCategory(categoryId);
+        setCurrentPage(1); // Reset to first page when changing category
+    };
+
+    console.log('categories === from index.tsx========= ', categories);
+    console.log(
+        'selectedCategory === from index.tsx ========= ',
+        selectedCategory
+    );
 
     // Only allow note creation if logged in
     const handleCreateNote = () => {
@@ -100,7 +162,10 @@ const Index = () => {
     };
 
     const handleNoteClick = (note: Note) => {
-        if (user && note.author === user) {
+        console.log('node ======: ', note);
+        console.log('user =====', user);
+
+        if (user && note.author.toUpperCase() === user) {
             setEditingNote(note);
             setIsEditing(true);
         } else {
@@ -121,22 +186,21 @@ const Index = () => {
                 ...noteData,
                 updatedAt: now
             };
-            const res = await fetch(`${API_URL}/api/notes/${editingNote.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify(updatedNote)
-            });
+            console.log('editingNote ====== index.tsx===', editingNote);
+            const res = await fetch(
+                `${API_URL}/api/notes/${editingNote?._id}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updatedNote)
+                }
+            );
             if (res.ok) {
-                const notesRes = await fetch(`${API_URL}/api/notes`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const notesData = await notesRes.json();
-                setNotes(
-                    Array.isArray(notesData) ? notesData : notesData.notes || []
-                );
+                // Refresh current page data
+                await fetchNotes(currentPage, searchQuery, selectedCategory);
                 setIsEditing(false);
                 setEditingNote(undefined);
             } else {
@@ -146,6 +210,7 @@ const Index = () => {
             // Only send required fields for new note
             const { title, content, category, author, tags, imageUrl } =
                 noteData;
+
             const res = await fetch(`${API_URL}/api/notes`, {
                 method: 'POST',
                 headers: {
@@ -161,16 +226,16 @@ const Index = () => {
                     imageUrl
                 })
             });
+
             if (res.ok) {
-                const notesRes = await fetch(`${API_URL}/api/notes`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const notesData = await notesRes.json();
-                setNotes(
-                    Array.isArray(notesData) ? notesData : notesData.notes || []
-                );
+                // Refresh current page data
+                await fetchNotes(currentPage, searchQuery, selectedCategory);
                 setIsEditing(false);
                 setEditingNote(undefined);
+                toast({
+                    title: 'Note created',
+                    description: `"${noteData.title}" was created successfully.`
+                });
             } else {
                 // handle error
             }
@@ -179,6 +244,7 @@ const Index = () => {
 
     // Add category to backend
     const handleAddCategory = async (name: string) => {
+        console.log('handleAddCategory called with name:=====', name);
         if (!token) return;
         const res = await fetch(`${API_URL}/api/categories`, {
             method: 'POST',
@@ -194,14 +260,17 @@ const Index = () => {
             });
             setCategories(await cats.json());
         } else {
-            // handle error
+            toast({
+                title: 'Category creation failed. Only logged in users can create categories.',
+                description: 'Could not create the category. Please try again.'
+            });
         }
     };
 
     // Handle login success
     const handleLoginSuccess = (userEmail: string) => {
         setUser(userEmail);
-        localStorage.setItem('user', userEmail);
+        localStorage.setItem('user', JSON.stringify(userEmail));
         const t = localStorage.getItem('token');
         if (t) setToken(t);
     };
@@ -219,12 +288,13 @@ const Index = () => {
         if (!token) return;
         if (!window.confirm('Are you sure you want to delete this note?'))
             return;
-        const res = await fetch(`${API_URL}/api/notes/${note.id}`, {
+        const res = await fetch(`${API_URL}/api/notes/${note._id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
-            setNotes(notes.filter(n => n.id !== note.id));
+            // Refresh current page data
+            await fetchNotes(currentPage, searchQuery, selectedCategory);
             toast({
                 title: 'Note deleted',
                 description: `"${note.title}" was deleted successfully.`
@@ -260,9 +330,9 @@ const Index = () => {
             <Header
                 onCreateNote={handleCreateNote}
                 onCreateLogin={() => setShowLogin(true)}
-                onSearch={setSearchQuery}
+                onSearch={handleSearchChange}
                 searchValue={searchQuery}
-                onSearchChange={setSearchQuery}
+                onSearchChange={handleSearchChange}
                 user={user}
                 onLogout={handleLogout}
             />
@@ -304,7 +374,7 @@ const Index = () => {
                                 <CategorySidebar
                                     categories={categories}
                                     selectedCategory={selectedCategory}
-                                    onCategorySelect={setSelectedCategory}
+                                    onCategorySelect={handleCategoryChange}
                                     onAddCategory={handleAddCategory}
                                 />
                             </div>
@@ -338,15 +408,15 @@ const Index = () => {
                                                     ? `${
                                                           categories.find(
                                                               cat =>
-                                                                  cat.id ===
+                                                                  cat._id ===
                                                                   selectedCategory
                                                           )?.name
                                                       } Notes`
                                                     : 'All Notes'}
                                             </h2>
                                             <p className="text-sm text-muted-foreground">
-                                                {filteredNotes.length}{' '}
-                                                {filteredNotes.length === 1
+                                                {totalNotes}{' '}
+                                                {totalNotes === 1
                                                     ? 'note'
                                                     : 'notes'}{' '}
                                                 found
@@ -361,6 +431,7 @@ const Index = () => {
                                                 onClick={() => {
                                                     setSelectedCategory(null);
                                                     setSearchQuery('');
+                                                    setCurrentPage(1);
                                                 }}
                                                 className="border-border hover:bg-secondary"
                                             >
@@ -372,16 +443,20 @@ const Index = () => {
                             </div>
                             {/* Notes Grid */}
                             <NoteGrid
-                                notes={filteredNotes}
+                                notes={notes}
                                 onNoteClick={handleNoteClick}
                                 onCreateNote={handleCreateNote}
-                                loading={!token && notes.length === 0}
+                                loading={isLoading}
                                 user={user}
                                 onEdit={note => {
                                     setEditingNote(note);
                                     setIsEditing(true);
                                 }}
                                 onDelete={handleDeleteNote}
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                totalNotes={totalNotes}
+                                onPageChange={handlePageChange}
                             />
                         </div>
                     </div>

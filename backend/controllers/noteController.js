@@ -13,7 +13,7 @@ cloudinary.config({
 });
 
 export const getNotes = async (req, res) => {
-    const { page = 1, limit = 10, search = '', category } = req.query;
+    const { page = 1, limit = 6, search = '', category } = req.query;
     const query = {};
     if (search) {
         query.$or = [
@@ -29,7 +29,7 @@ export const getNotes = async (req, res) => {
         .skip((+page - 1) * +limit)
         .limit(+limit)
         .populate('category')
-        .populate('user', 'username'); // ইউজারনেম দেখানোর জন্য
+        .populate('user', 'username');
     const total = await Note.countDocuments(query);
     res.json({ notes, total });
 };
@@ -44,19 +44,25 @@ export const getNote = async (req, res) => {
 
 export const createNote = async (req, res) => {
     const { title, content, category, author, tags, imageUrl } = req.body;
-    if (!title || !content || !category)
+
+    if (!title || !content || !author)
         return res.status(400).json({ message: 'All fields required.' });
+
     const cat = await Category.findOne({ name: category });
-    if (!cat) return res.status(400).json({ message: 'Invalid category.' });
+
+    if (!cat || !cat._id)
+        return res.status(400).json({ message: 'Invalid category.' });
+
     const note = await Note.create({
         title,
         content,
-        category,
+        category: cat._id,
         author,
         tags,
         imageUrl,
-        user: req.userId // ইউজার আইডি সংরক্ষণ
+        user: req.userId
     });
+
     res.status(201).json(note);
 };
 

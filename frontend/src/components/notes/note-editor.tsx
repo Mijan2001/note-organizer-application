@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Save, X, Calendar, User, Upload, Image, Trash2 } from 'lucide-react';
+import { Save, X, Calendar, User, Image, Trash2 } from 'lucide-react';
 import { type Note } from '@/components/ui/note-card';
 
 interface NoteEditorProps {

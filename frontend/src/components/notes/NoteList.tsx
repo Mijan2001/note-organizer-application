@@ -3,18 +3,33 @@ import { useNotes } from '../../hooks/useNotes';
 import { useAuth } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+type Note = {
+    _id: string;
+    title: string;
+    user?: {
+        _id: string;
+    };
+    // add other fields as needed
+};
+
 export default function NoteList() {
     const [page, setPage] = useState(1);
-    const { notes, total, loading } = useNotes(page, 10);
+    const { notes, total, loading } = useNotes(page, 10) as {
+        notes: Note[];
+        total: number;
+        loading: boolean;
+    };
     const { user } = useAuth();
     const navigate = useNavigate();
 
     if (loading) return <div>Loading notes...</div>;
 
-    const handleDelete = async id => {
+    const handleDelete = async (id: string) => {
         const token = localStorage.getItem('token');
         if (!window.confirm('Are you sure?')) return;
-        const res = await fetch(`/api/notes/${id}`, {
+        const res = await fetch(`${API_URL}/api/notes/${id}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         });
@@ -22,7 +37,7 @@ export default function NoteList() {
         else alert('Delete failed');
     };
 
-    const handleEdit = id => {
+    const handleEdit = (id: string) => {
         navigate(`/notes/${id}?edit=1`);
     };
 

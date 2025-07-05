@@ -12,6 +12,7 @@ interface HeaderProps {
     onSearchChange?: (value: string) => void;
     className?: string;
     user?: string | null;
+    username?: string;
     onLogout?: () => void;
 }
 
@@ -66,7 +67,9 @@ export const Header = ({
                             <>
                                 <Avatar className="w-8 h-8">
                                     <AvatarFallback className="bg-gradient-to-br from-pink-500 to-violet-500 text-white font-semibold">
-                                        {user.slice(0, 1).toUpperCase()}
+                                        {user.username
+                                            ?.charAt(0)
+                                            .toUpperCase() || 'U'}
                                     </AvatarFallback>
                                 </Avatar>
                                 <Button

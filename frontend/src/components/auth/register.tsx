@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-
 const URL = import.meta.env.VITE_API_URL;
 
 interface RegisterDialogProps {
@@ -29,6 +28,7 @@ export function RegisterDialog({ onClose, onLogin }: RegisterDialogProps) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Registration failed');
             setSuccess('Registration successful! You can now log in.');
+            onLogin(); // Automatically switch to login after successful registration
         } catch (err: any) {
             setError(err.message);
         } finally {
