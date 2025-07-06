@@ -23,6 +23,8 @@ export const NoteEditor = ({
     onCancel,
     className
 }: NoteEditorProps) => {
+    console.log('categories in NoteEditor:=====', categories);
+    console.log('note in NoteEditor:===', note);
     const [title, setTitle] = useState(note?.title || '');
     const [content, setContent] = useState(note?.content || '');
     const [category, setCategory] = useState<{
@@ -61,7 +63,7 @@ export const NoteEditor = ({
         onSave({
             title: title.trim(),
             content: content.trim(),
-            category: category || { name: 'General' },
+            category: category || { name: 'article' },
             author: author.trim(),
             tags: tags.filter(tag => tag.trim()),
             imageUrl: imageUrl,
@@ -188,16 +190,15 @@ export const NoteEditor = ({
 
                 {/* Metadata Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Category */}
                     <div>
                         <label className="text-sm font-medium text-foreground mb-2 block">
                             Category
                         </label>
                         <select
-                            value={category?._id || ''}
+                            value={category?.name || ''}
                             onChange={e => {
                                 const selected = categories.find(
-                                    cat => cat.id === e.target.value
+                                    cat => cat.name === e.target.value
                                 );
                                 setCategory(
                                     selected
@@ -207,13 +208,15 @@ export const NoteEditor = ({
                                           }
                                         : null
                                 );
+                                console.log('selected category:', selected);
+                                console.log('e.target.value:', e.target.value);
                             }}
                             className="w-full h-10 px-3 bg-background border border-border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                             title="Category"
                         >
                             <option value="">Select category...</option>
                             {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>
+                                <option key={cat.id} value={cat.name}>
                                     {cat.name}
                                 </option>
                             ))}

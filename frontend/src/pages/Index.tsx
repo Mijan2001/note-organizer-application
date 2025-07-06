@@ -146,6 +146,10 @@ const Index = () => {
 
     // Handle category change
     const handleCategoryChange = (categoryId: string | null) => {
+        console.log(
+            'categoryId in handleCategoryChange Index.tsx======:',
+            categoryId
+        );
         setSelectedCategory(categoryId);
         setCurrentPage(1); // Reset to first page when changing category
     };
@@ -214,7 +218,7 @@ const Index = () => {
             const { title, content, category, author, tags, imageUrl } =
                 noteData;
 
-            console.log('before token=================== ===', token);
+            console.log('notedData=================== ===', noteData);
             const res = await fetch(`${API_URL}/api/notes`, {
                 method: 'POST',
                 headers: {
